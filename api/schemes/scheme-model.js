@@ -1,3 +1,4 @@
+const db = require('../../data/db-config')
 function find() { // EXERCISE A
   /*
     1A- Study the SQL query below running it in SQLite Studio against `data/schemes.db3`.
@@ -15,9 +16,20 @@ function find() { // EXERCISE A
     2A- When you have a grasp on the query go ahead and build it in Knex.
     Return from this function the resulting dataset.
   */
+ //represent schemes as sc
+ //left join means other table or to connect two tables
+ //joining sc and st we first gave it aliases then told what to combine
+ //* all
+  return db('schemes as sc')
+  .leftJoin('steps as st', 'sc.scheme_id', 'st.scheme_id')
+  .select('sc.*')
+  .count('st.step_id as number_of_steps')
+  .groupBy('sc.scheme_id')
+  .orderBy('sc.scheme_id')
+
 }
 
-function findById(scheme_id) { // EXERCISE B
+async function findById(scheme_id) { // EXERCISE B
   /*
     1B- Study the SQL query below running it in SQLite Studio against `data/schemes.db3`:
 
@@ -83,6 +95,31 @@ function findById(scheme_id) { // EXERCISE B
         "steps": []
       }
   */
+ //where filters, we set equal to the scheme_id we put as parameter
+  const rows = await db('schemes as sc')
+      .leftJoin('steps as st', 'sc.scheme_id', 'st.scheme_id')
+      .select('st.*', 'sc.scheme_name', 'sc.scheme_id')
+      .where('sc.scheme_id', scheme_id)
+      .orderBy('st.step_number')
+
+      //make it viewable
+  const result = {
+    scheme_id: rows[0].scheme_id,
+    scheme_name:rows[0].scheme_name,
+    steps:[]
+  }
+
+  rows.forEach(row => {
+    if(row.step_id){
+      result.steps.push({
+        step_id: row.step_id, 
+        step_number: row.step_number, 
+        instructions: row.instructions
+      })
+    }
+  })
+
+  return result
 }
 
 function findSteps(scheme_id) { // EXERCISE C
